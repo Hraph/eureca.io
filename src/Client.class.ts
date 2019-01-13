@@ -289,7 +289,7 @@ module Eureca {
             var _eureca_uri = _eureca_uri || undefined;
             var uri = this.settings.uri || (prefix ? _eureca_host + '/'+ prefix : (_eureca_uri || undefined));
 
-            console.log(uri, prefix);
+            //console.log(uri, prefix);
             this._ready = false;
             var _transformer = this.settings.transformer;
             var _parser = this.settings.parser;

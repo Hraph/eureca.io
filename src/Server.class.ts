@@ -403,7 +403,7 @@ module Eureca  {
 
 
                     if (__this.useAuthentication && !eurecaClientSocket.eureca.authenticated) {
-                        console.log('Authentication needed for ', eurecaClientSocket.id);
+                        //console.log('Authentication needed for ', eurecaClientSocket.id);
                         return;
                     }
 
