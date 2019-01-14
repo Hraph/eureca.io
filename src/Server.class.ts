@@ -15,14 +15,12 @@ import {Protocol} from "./Protocol.config";
 import {IServer} from "./IServer.interface";
 import {EObject} from "./EObject.class";
 
-/** @ignore */
-//declare var Proxy: any;
+/**
+ * Import Primus transport provider
+ */
+import './transport/Primus.transport';
 
 var fs = require('fs');
-
-//var EProxy = require('./EurecaProxy.class.js').Eureca.EurecaProxy;
-//var io = require('engine.io');
-var util = require('util');
 var http = require('http');
 
 var host = '';
@@ -32,53 +30,47 @@ function getUrl(req) {
     return host;
 }
 
-var hproxywarn = false;
+/**
+ * Eureca server constructor
+ * This constructor takes an optional settings object
+ * @constructor Server
+ * @param {object} [settings] - have the following properties
+ * @property {string} [settings.transport=engine.io] - can be "engine.io", "sockjs", "websockets", "faye" or "browserchannel" by default "engine.io" is used
+ * @property {function} [settings.authenticate] - If this function is defined, the client will not be able to invoke server functions until it successfully call the client side authenticate method, which will invoke this function.
+ * @property {function} [settings.serialize] - If defined, this function is used to serialize the request object before sending it to the client (default is JSON.stringify). This function can be useful to add custom information/meta-data to the transmitted request.
+ * @property {function} [settings.deserialize] - If defined, this function is used to deserialize the received response string.
 
-var clientUrl = {};
-var ELog = console;
-
-
-    /**
-     * Eureca server constructor
-     * This constructor takes an optional settings object
-     * @constructor Server
-     * @param {object} [settings] - have the following properties
-     * @property {string} [settings.transport=engine.io] - can be "engine.io", "sockjs", "websockets", "faye" or "browserchannel" by default "engine.io" is used
-     * @property {function} [settings.authenticate] - If this function is defined, the client will not be able to invoke server functions until it successfully call the client side authenticate method, which will invoke this function.
-     * @property {function} [settings.serialize] - If defined, this function is used to serialize the request object before sending it to the client (default is JSON.stringify). This function can be useful to add custom information/meta-data to the transmitted request.
-     * @property {function} [settings.deserialize] - If defined, this function is used to deserialize the received response string.
-
-     * @example
-     * <h4> # default instantiation</h4>
-     * var Eureca = require('eureca.io');
-     * //use default transport
-     * var server = new Eureca.Server();
-     *
-     *
-     * @example
-     * <h4> # custom transport instantiation </h4>
-     * var Eureca = require('eureca.io');
-     * //use websockets transport
-     * var server = new Eureca.Server({transport:'websockets'});
-     *
-     * @example
-     * <h4> # Authentication </h4>
-     * var Eureca = require('eureca.io');
-     *
-     * var eurecaServer = new Eureca.Server({
-     *     authenticate: function (authToken, next) {
-     *         console.log('Called Auth with token=', authToken);
-     *
-     *         if (isValidToekn(authToken)) next();  // authentication success
-     *         else next('Auth failed'); //authentication fail
-     *     }
-     * });
-     *
-     * @see attach
-     * @see getClient
-     *
-     *
-     */
+ * @example
+ * <h4> # default instantiation</h4>
+ * var Eureca = require('eureca.io');
+ * //use default transport
+ * var server = new Eureca.Server();
+ *
+ *
+ * @example
+ * <h4> # custom transport instantiation </h4>
+ * var Eureca = require('eureca.io');
+ * //use websockets transport
+ * var server = new Eureca.Server({transport:'websockets'});
+ *
+ * @example
+ * <h4> # Authentication </h4>
+ * var Eureca = require('eureca.io');
+ *
+ * var eurecaServer = new Eureca.Server({
+ *     authenticate: function (authToken, next) {
+ *         console.log('Called Auth with token=', authToken);
+ *
+ *         if (isValidToekn(authToken)) next();  // authentication success
+ *         else next('Auth failed'); //authentication fail
+ *     }
+ * });
+ *
+ * @see attach
+ * @see getClient
+ *
+ *
+ */
 export class Server extends EObject {
     
     public contract: any[];

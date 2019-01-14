@@ -178,8 +178,6 @@ var createServer = function (hook, options: any = {}) {
     }
 };
 
-
-
 var createClient = function (uri, options: any = {}) {
 
     options.pathname = options.prefix ? '/' + options.prefix : undefined;
@@ -208,6 +206,10 @@ var createClient = function (uri, options: any = {}) {
 //Transport.register('primus', '/js/primus.js', createClient, createServer);
 
 //set empty client script by default, it'll be populated by createClient function
+
+/**
+ * Register transport provider
+ */
 Transport.register(
     'primus', '',
     createClient, createServer,

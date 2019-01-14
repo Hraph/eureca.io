@@ -12,6 +12,12 @@ import {Protocol} from "./Protocol.config";
 import {Util} from "./Util.class";
 import {Transport} from "./Transport";
 
+/**
+ * Import Primus transport provider
+ */
+import './transport/Primus.transport';
+
+
 /** @ignore */
 declare var require: any;
 
