@@ -2,13 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 class Protocol {
 }
-//internal stuff
 Protocol.contractId = '__eureca__';
 Protocol.authReq = '__auth__';
 Protocol.authResp = '__authr__';
 Protocol.signal = '__signal__';
 Protocol.signalACK = '__sigack__';
-//RPC stuff
 Protocol.functionId = 'f';
 Protocol.argsId = 'a';
 Protocol.resultId = 'r';

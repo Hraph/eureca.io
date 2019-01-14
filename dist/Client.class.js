@@ -1,65 +1,15 @@
 "use strict";
-/// <reference path="transport/Primus.transport.ts" />
-/// <reference path="transport/WebRTC.transport.ts" />
-/// <reference path="Stub.ts" />
-/// <reference path="EObject.class.ts" />
-/// <reference path="Util.class.ts" />
-/// <reference path="Contract.class.ts" />
 Object.defineProperty(exports, "__esModule", { value: true });
 const EObject_class_1 = require("./EObject.class");
 const Stub_1 = require("./Stub");
 const Protocol_config_1 = require("./Protocol.config");
 const Util_class_1 = require("./Util.class");
 const Transport_1 = require("./Transport");
+require("./transport/Primus.transport");
 var is_nodejs = Util_class_1.Util.isNodejs;
 if (is_nodejs) {
     var _eureca_prefix = 'eureca.io';
 }
-/**
- * Eureca client class
- * This constructor takes an optional settings object
- * @constructor Client
- * @param {object} [settings] - have the following properties <br />
- * @property {URI} settings.uri - Eureca server WS uri, browser client can automatically guess the server URI if you are using a single Eureca server but Nodejs client need this parameter.
- * @property {string} [settings.prefix=eureca.io] - This determines the websocket path, it's unvisible to the user but if for some reason you want to rename this path use this parameter.
- * @property {int} [settings.retry=20] - Determines max retries to reconnect to the server if the connection is lost.
- * @property {boolean} [settings.autoConnect=true] - Estabilish connection automatically after instantiation.<br />if set to False you'll need to call client.connect() explicitly.
- *
- *
- * @example
- * //<h4>Example of a nodejs client</h4>
- * var Eureca = require('eureca.io');
- * var client = new Eureca.Client({ uri: 'ws://localhost:8000/', prefix: 'eureca.io', retry: 3 });
- * client.ready(function (serverProxy) {
- *    // ...
- * });
- *
- * @example
- * //<h4>Equivalent browser client</h4>
- * &lt;!doctype html&gt;
- * &lt;html&gt;
- *     &lt;head&gt;
- *         &lt;script src=&quot;/eureca.js&quot;&gt;&lt;/script&gt;
- *     &lt;/head&gt;
- *     &lt;body&gt;
- *         &lt;script&gt;
- *             var client = new Eureca.Client({prefix: 'eureca.io', retry: 3 });
- *             //uri is optional in browser client
- *             client.ready(function (serverProxy) {
- *                 // ...
- *             });
- *         &lt;/script&gt;
- *     &lt;/body&gt;
- * &lt;/html&gt;
- *
- * @see authenticate
- * @see connect
- * @see disconnect
- * @see send
- * @see isReady
- *
- *
- */
 class Client extends EObject_class_1.EObject {
     constructor(settings = {}) {
         super();
@@ -67,13 +17,7 @@ class Client extends EObject_class_1.EObject {
         this.tries = 0;
         this.serialize = (v) => v;
         this.deserialize = (v) => v;
-        /**
-         * When the connection is estabilished, the server proxy object allow calling exported server functions.
-         * @var {object} Client#serverProxy
-         *
-         */
         this.serverProxy = {};
-        //needed by primus
         settings.transformer = settings.transport || 'engine.io';
         this.transport = Transport_1.Transport.get(settings.transformer);
         if (typeof settings.serialize == 'function' || typeof this.transport.serialize == 'function')
@@ -85,120 +29,44 @@ class Client extends EObject_class_1.EObject {
         this.stub = new Stub_1.Stub(settings);
         this.exports = {};
         this.settings.autoConnect = !(this.settings.autoConnect === false);
-        //if (this.settings.autoConnect !== false) 
         this.maxRetries = settings.retry || 20;
-        //var tries = 0;
-        //this.registerEvents(['ready', 'update', 'onConnect', 'onDisconnect', 'onError', 'onMessage', 'onConnectionLost', 'onConnectionRetry', 'authResponse']);
         if (this.settings.autoConnect)
             this.connect();
     }
-    /**
-     * close client connection
-     *
-     *
-     * @function Client#disconnect
-     *
-     */
     disconnect() {
         this.tries = this.maxRetries + 1;
         this.socket.close();
     }
-    /**
-    * indicate if the client is ready or not, it's better to use client.ready() event, but if for some reason
-    * you need to check if the client is ready without using the event system you can use this.<br />
-    *
-     * @function Client#isReady
-     * @return {boolean} - true if the client is ready
-     *
-     * @example
-     * var client = new Eureca.Client({..});
-     * //...
-     * if (client.isReady()) {
-     *      client.serverProxy.foo();
-     * }
-     */
     isReady() {
         return this._ready;
     }
-    /**
-     * Send user data to the server
-     *
-     * @function Client#send
-     * @param {any} rawData - data to send (must be serializable type)
-     */
     send(rawData) {
         return this.socket.send(this.serialize(rawData));
     }
-    /**
-     * Send authentication request to the server. <br />
-     * this can take an arbitrary number of arguments depending on what you defined in the server side <br />
-     * when the server receive an auth request it'll handle it and return null on auth success, or an error message if something goes wrong <br />
-     * you need to listed to auth result throught authResponse event
-     * ** Important ** : it's up to you to define the authenticationmethod in the server side
-     * @function Client#authenticate
-     *
-     * @example
-     * var client = new Eureca.Client({..});
-     * //listen to auth response
-     * client.authResponse(function(result) {
-     *     if (result == null) {
-     *         // ... Auth OK
-     *     }
-     *     else {
-     *         // ... Auth failed
-     *     }
-     * });
-     *
-     * client.ready(function(){
-     *
-     *      //send auth request
-     *      client.authenticate('your_auth_token');
-     * });
-     */
     authenticate(...args) {
-        //if (!this._ready) 
-        //{
-        //    return;
-        //}
         var authRequest = {};
         authRequest[Protocol_config_1.Protocol.authReq] = args;
         this.socket.send(this.serialize(authRequest));
     }
-    /*
-     * If the authentication is used, this will tell you if you are already authenticated or not.
-     * @return {boolean} true mean that the client is authenticated
-     */
     isAuthenticated() {
         return this.socket.isAuthenticated();
     }
     setupWebRTC() {
-        //this.stub.importRemoteFunction(_this.webRTCProxy, _this.socket, jobj[Protocol.contractId]);
     }
-    /**
-     * connect client
-     *
-     *
-     * @function Client#connect
-     *
-     */
     connect() {
-        //var _this = this;
         var prefix = '';
         prefix += this.settings.prefix || _eureca_prefix;
         var _eureca_uri = _eureca_uri || undefined;
         var uri = this.settings.uri || (prefix ? _eureca_host + '/' + prefix : (_eureca_uri || undefined));
-        //console.log(uri, prefix);
         this._ready = false;
         var _transformer = this.settings.transformer;
         var _parser = this.settings.parser;
-        //_this.socket = EurecaSocket(uri, { path: prefix });
         var client = this.transport.createClient(uri, {
             prefix: prefix,
             transformer: _transformer,
             parser: _parser,
             retries: this.maxRetries,
             minDelay: 100,
-            //WebRTC stuff
             reliable: this.settings.reliable,
             maxRetransmits: this.settings.maxRetransmits,
             ordered: this.settings.ordered
@@ -216,65 +84,30 @@ class Client extends EObject_class_1.EObject {
         client.on('message', function (data) {
             __this.trigger('message', data);
             var jobj = __this.deserialize.call(client, data);
-            //if (typeof data != 'object') {
-            //    try {
-            //        jobj = JSON.parse(data);
-            //    }
-            //    catch (ex) {
-            //        jobj = {};
-            //    }
-            //}
-            //else {
-            //    jobj = data;
-            //}
             if (typeof jobj != 'object') {
                 __this.trigger('unhandledMessage', data);
                 return;
             }
-            if (jobj[Protocol_config_1.Protocol.contractId]) //should be first message
-             {
+            if (jobj[Protocol_config_1.Protocol.contractId]) {
                 var update = __this.contract && __this.contract.length > 0;
                 __this.contract = jobj[Protocol_config_1.Protocol.contractId];
-                /** Experimental : dynamic client contract*/
-                //if (jobj[Protocol.signatureId]) {
-                //    var contract = [];
-                //    contract = Contract.ensureContract(_this.exports);    
-                //    var contractResp = {};                    
-                //    contractResp[Protocol.contractId] = contract;
-                //    contractResp[Protocol.signatureId] = jobj[Protocol.signatureId];
-                //    _this.send(contractResp);
-                //    _this.contract = contract;
-                //}
-                /*****************************************************/
-                __this.stub.importRemoteFunction(proxy, client, jobj[Protocol_config_1.Protocol.contractId] /*, _this.serialize*/);
-                //var next = function () {
+                __this.stub.importRemoteFunction(proxy, client, jobj[Protocol_config_1.Protocol.contractId]);
                 __this._ready = true;
                 if (update) {
-                    /**
-                    * ** Experimental ** Triggered when the server explicitly notify the client about remote functions change.<br />
-                    * you'll need this for example, if the server define some functions dynamically and need to make them available to clients.
-                    *
-                    */
                     __this.trigger('update', proxy, __this.contract);
                 }
                 else {
                     __this.trigger('ready', proxy, __this.contract);
                 }
-                //}
-                //if (_this.settings.authenticate) _this.settings.authenticate(_this, next);
-                //else next();
                 return;
             }
-            //Handle auth response
             if (jobj[Protocol_config_1.Protocol.authResp] !== undefined) {
                 client.eureca.authenticated = true;
                 var callArgs = ['authResponse'].concat(jobj[Protocol_config_1.Protocol.authResp]);
                 __this.trigger.apply(__this, callArgs);
                 return;
             }
-            // /!\ ordre is important we have to check invoke BEFORE callback
-            if (jobj[Protocol_config_1.Protocol.functionId] !== undefined) //server invoking client
-             {
+            if (jobj[Protocol_config_1.Protocol.functionId] !== undefined) {
                 if (client.context == undefined) {
                     var returnFunc = function (result, error = null) {
                         var retObj = {};
@@ -295,31 +128,10 @@ class Client extends EObject_class_1.EObject {
                     };
                 }
                 client.context.retId = jobj[Protocol_config_1.Protocol.signatureId];
-                //Experimental custom context sharing
-                //remote context is shared throught clientProxy or proxy function in the server side
-                //Example 
-                // a server exposing hello() function
-                // a client calling server hello() function
-                //
-                // in the client side you can issue : 
-                //    eurecaServer.hello.context = {somefield:'someData'}
-                //    //you can also use eurecaServer.context = {somefield:'someData'} in this case it'll be global to all exposed functions !
-                //    eurecaServer.hello();
-                //
-                // in the server side, you get the remote shared context throught
-                //    exports.hello = function() {
-                //          console.log(this.remoteContext); // <== you get the remote context here 
-                //          console.log('hello');
-                //    }
-                //if (jobj[Protocol.context]) {
-                //    client.remoteContext = jobj[Protocol.context];
-                //}
                 __this.stub.invoke(client.context, __this, jobj, client);
                 return;
             }
-            if (jobj[Protocol_config_1.Protocol.signatureId] !== undefined) //invoke result
-             {
-                //_this.stub.doCallBack(jobj[Protocol.signatureId], jobj[Protocol.resultId], jobj[Protocol.errorId]);
+            if (jobj[Protocol_config_1.Protocol.signatureId] !== undefined) {
                 Stub_1.Stub.doCallBack(jobj[Protocol_config_1.Protocol.signatureId], jobj[Protocol_config_1.Protocol.resultId], jobj[Protocol_config_1.Protocol.errorId]);
                 return;
             }
@@ -339,157 +151,34 @@ class Client extends EObject_class_1.EObject {
             __this.trigger('stateChange', s);
         });
     }
-    //#region ==[ Events bindings ]===================
-    /**
-     * Bind a callback to 'ready' event @see {@link Client#event:ready|Client ready event}
-     * >**Note :** you can also use Client.on('ready', callback) to bind ready event
-     *
-     * @function Client#ready
-     *
-     */
     ready(callback) {
-        /**
-        * Triggered when the connection is estabilished and server remote functions available to the client.
-        *
-        * @event Client#ready
-        * @property {Proxy} serverProxy - server proxy object.
-        * @example
-        * client.ready(function (serverProxy) {
-        *    serverProxy.hello();
-        * });
-        *
-        */
         this.on('ready', callback);
     }
-    /**
-     * Bind a callback to 'update' event @see {@link Client#event:update|Client update event}
-     * >**Note :** you can also use Client.on('update', callback) to bind update event
-     *
-     * @function Client#update
-     *
-     */
     update(callback) {
         this.on('update', callback);
     }
-    /**
-     * Bind a callback to 'connect' event
-     * >**Note :** you can also use Client.on('connect', callback) to bind connect event
-     *
-     * @function Client#onConnect
-     *
-     */
     onConnect(callback) {
         this.on('connect', callback);
     }
-    /**
-     * Bind a callback to 'disconnect' event @see {@link Client#event:disconnect|Client disconnect event}
-     * >**Note :** you can also use Client.on('disconnect', callback) to bind disconnect event
-     *
-     * @function Client#donDisconnect
-     *
-     */
     onDisconnect(callback) {
-        /**
-        * triggered when the connection is lost after all retries to reestabilish it.
-        *
-        * @event Client#disconnect
-        */
         this.on('disconnect', callback);
     }
-    /**
-     * Bind a callback to 'message' event @see {@link Client#event:message|Client message event}
-     * >**Note :** you can also use Client.on('message', callback) to bind message event
-     *
-     * @function Client#onMessage
-     *
-     */
     onMessage(callback) {
-        /**
-        * Triggered when the client receive a message from the server.
-        * This event can be used to intercept exchanged messages betweens client and server, if you need to access low level network messages
-        *
-        * @event Client#message
-        *
-        *
-        */
         this.on('message', callback);
     }
-    /**
-     * Bind a callback to 'unhandledMessage' event @see {@link Client#event:unhandledMessage|Client unhandledMessage event}
-     * >**Note :** you can also use Client.on('message', callback) to bind unhandledMessage event
-     *
-     * @function Client#onUnhandledMessage
-     *
-     */
     onUnhandledMessage(callback) {
-        /**
-        * Triggered when the client receive a message from the server and is not able to handle it.
-        * this mean that the message is not an internal eureca.io message.<br />
-        * if for some reason you need to exchange send/receive raw or custom data, listen to this event which in countrary to {@link Client#event:message|message event} will only trigger for non-eureca messages.
-        *
-        * @event Client#unhandledMessage
-        *
-        *
-        */
         this.on('unhandledMessage', callback);
     }
-    /**
-     * Bind a callback to 'error' event @see {@link Client#event:error|Client error event}
-     * >**Note :** you can also use Client.on('error', callback) to bind error event
-     *
-     * @function Client#onError
-     *
-     */
     onError(callback) {
-        /**
-        * triggered if an error occure.
-        *
-        * @event Client#error
-        * @property {String} error - the error message
-        */
         this.on('error', callback);
     }
-    /**
-     * Bind a callback to 'connectionLost' event
-     * >**Note :** you can also use Client.on('connectionLost', callback) to bind connectionLost event
-     *
-     * @function Client#onConnectionLost
-     *
-     */
     onConnectionLost(callback) {
         this.on('connectionLost', callback);
     }
-    /**
-     * Bind a callback to 'connectionRetry' event
-     * >**Note :** you can also use Client.on('connectionRetry', callback) to bind connectionRetry event
-     *
-     * @function Client#onConnectionRetry
-     *
-     */
     onConnectionRetry(callback) {
-        /**
-        * triggered when the connection is lost and the client try to reconnect.
-        *
-        * @event Client#connectionRetry
-        */
         this.on('connectionRetry', callback);
     }
-    /**
-     * Bind a callback to 'authResponse' event @see {@link Client#event:authResponse|Client authResponse event}
-     * >**Note :** you can also use Client.on('authResponse', callback) to bind authResponse event
-     *
-     * @function Client#onAuthResponse
-     *
-     */
     onAuthResponse(callback) {
-        /**
-        * Triggered when the client receive authentication response from the server.
-        * The server should return a null response on authentication success.
-        *
-        * @event Client#authResponse
-        *
-        *
-        */
         this.on('authResponse', callback);
     }
 }

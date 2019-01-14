@@ -3,14 +3,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 class EObject {
     constructor() {
     }
-    // Dynamic extend
     extend(options) {
         if (options) {
             for (var key in options)
                 this[key] = options[key];
         }
     }
-    // Events primitives ======================
     bind(event, fct) {
         this._events = this._events || {};
         this._events[event] = this._events[event] || [];

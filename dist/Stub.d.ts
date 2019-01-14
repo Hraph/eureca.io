@@ -20,9 +20,6 @@ export declare class Stub {
         then: (fn: any, errorFn: any) => void;
     };
     invokeRemote(context: any, fname: any, socket: any, ...args: any[]): EurecaPromise<{}>;
-    /**
-     * Generate proxy functions allowing to call remote functions
-     */
     importRemoteFunction(handle: any, socket: any, functions: any): void;
     private sendResult;
     invoke(context: any, handle: any, obj: any, socket?: any): void;

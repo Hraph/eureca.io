@@ -1,10 +1,4 @@
 "use strict";
-/// <reference path="../EObject.class.ts" />
-/// <reference path="../Util.class.ts" />
-/// <reference path="../Transport.ts" />
-/// <reference path="../IServer.interface.ts" />
-/// <reference path="../ISocket.interface.ts" />
-/// <reference path="WebRTCPeer.ts" />
 Object.defineProperty(exports, "__esModule", { value: true });
 const Util_class_1 = require("../Util.class");
 const EObject_class_1 = require("../EObject.class");
@@ -18,8 +12,6 @@ if (Util_class_1.Util.isNodejs) {
         webrtc = require('wrtc');
     }
     catch (e) {
-        //console.error("WebRTC not be available, you need to install wrtc module");
-        //process.exit(e.code);
         webrtc = {};
     }
 }
@@ -29,13 +21,9 @@ class Socket extends EObject_class_1.EObject {
         this.socket = socket;
         this.peer = peer;
         this.eureca = {};
-        //this.request = socket.request;
         this.id = peer && peer.id ? peer.id : Util_class_1.Util.randomStr(16);
         if (socket && socket.request)
             this.request = socket.request;
-        //FIXME : with nodejs 0.10.0 remoteAddress of nodejs clients is undefined (this seems to be a engine.io issue)            
-        //this.remoteAddress = socket.address;
-        //this.registerEvents(['open', 'message', 'error', 'close', 'reconnecting']);
         this.bindEvents();
     }
     update(socket) {
@@ -65,23 +53,10 @@ class Socket extends EObject_class_1.EObject {
             __this.trigger('error', error);
         };
         if (this.peer) {
-            //    this.peer.unbindEvent('disconnected');
-            //    this.peer.on('disconnected', function () {
-            //        _this.trigger('close');
-            //    });
             this.peer.on('stateChange', function (s) {
                 __this.trigger('stateChange', s);
-                // if (s === 'completed')  //we need to wait for state 'completed' before considering WebRTC connection estabilished
-                //     __this.trigger('connect');
             });
         }
-        /*
-        this.socket.on('reconnecting', function () {
-            var args = arguments.length > 0 ? Array.prototype.slice.call(arguments, 0) : [];
-            args.unshift('reconnecting');
-            _this.trigger.apply(_this, args);
-        });
-        */
     }
     isAuthenticated() {
         return this.eureca.authenticated;
@@ -94,7 +69,6 @@ class Socket extends EObject_class_1.EObject {
     close() {
         this.socket.close();
     }
-    //deprecated ?
     onopen(callback) {
         this.on('open', callback);
     }
@@ -108,7 +82,6 @@ class Socket extends EObject_class_1.EObject {
         this.on('error', callback);
     }
     ondisconnect(callback) {
-        //this.socket.on('reconnecting', callback);
     }
 }
 exports.Socket = Socket;
@@ -122,8 +95,7 @@ class Server {
             app = appServer._events.request;
         if (app.get && app.post) {
             app.post('/webrtc-' + options.prefix, function (request, response) {
-                if (request.body) //body parser present
-                 {
+                if (request.body) {
                     var offer = request.body[Protocol_config_1.Protocol.signal];
                     __this.serverPeer.getOffer(offer, request, function (pc) {
                         var resp = {};
@@ -146,7 +118,6 @@ class Server {
             });
         }
         else {
-            //we use POST request for webRTC signaling            
             appServer.on('request', function (request, response) {
                 if (request.method === 'POST') {
                     if (request.url.split('?')[0] === '/webrtc-' + options.prefix) {
@@ -199,11 +170,6 @@ class Server {
     }
 }
 exports.Server = Server;
-/**
- *
- *
- * @param hook - eureca server
- */
 var createServer = function (hook, options) {
     try {
         var server = new Server(hook, options);
@@ -265,19 +231,8 @@ var createClient = function (uri, options = {}) {
                 var params = Protocol_config_1.Protocol.signal + '=' + JSON.stringify(pc.localDescription);
                 var parser = document.createElement('a');
                 parser.href = uri;
-                //parser.protocol;
-                //parser.host;    
-                //parser.hostname;
-                //parser.port;    
-                //parser.pathname;
-                //parser.hash;    
-                //parser.search;  
-                //var params = "lorem=ipsum&name=binny";
                 xhr.open("POST", '//' + parser.hostname + ':' + parser.port + '/webrtc-' + options.prefix, true);
-                //Send the proper header information along with the request
                 xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-                //xhr.setRequestHeader("Content-length", params.length.toString());
-                //xhr.setRequestHeader("Connection", "close");
                 xhr.onreadystatechange = function () {
                     if (xhr.readyState == 4 && xhr.status == 200) {
                         var resp = JSON.parse(xhr.responseText);
@@ -298,7 +253,6 @@ var createClient = function (uri, options = {}) {
         });
     };
     signal();
-    //if connection timeout
     clientPeer.on('timeout', () => {
         signal();
     });

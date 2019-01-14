@@ -1,26 +1,17 @@
 "use strict";
-/// <reference path="../EObject.class.ts" />
-/// <reference path="../Util.class.ts" />
-/// <reference path="../Transport.ts" />
-/// <reference path="../IServer.interface.ts" />
-/// <reference path="../ISocket.interface.ts" />
 Object.defineProperty(exports, "__esModule", { value: true });
 const EObject_class_1 = require("../EObject.class");
 const Transport_1 = require("../Transport");
 const Util_class_1 = require("../Util.class");
 const Primus = require('primus');
 class Socket extends EObject_class_1.EObject {
-    //public webRTCChannel:any;
-    //private wRTCPeer;
     constructor(socket) {
         super();
         this.socket = socket;
         this.eureca = {};
         this.request = socket.request;
         this.id = socket.id;
-        //FIXME : with nodejs 0.10.0 remoteAddress of nodejs clients is undefined (this seems to be a engine.io issue)
         this.remoteAddress = socket.address;
-        //this.registerEvents(['open', 'message', 'error', 'close', 'reconnecting']);
         this.bindEvents();
     }
     bindEvents() {
@@ -51,26 +42,10 @@ class Socket extends EObject_class_1.EObject {
             __this.trigger.apply(__this, args);
         });
     }
-    //public setupWebRTC()
-    //{
-    //    if (this.wRTCPeer) return;
-    //    var _this = this;
-    //    this.wRTCPeer = new Eureca.Transports.WebRTC.Peer();
-    //    this.wRTCPeer.makeOffer(function(pc) {
-    //        var webRTCSignalReq = {};
-    //        webRTCSignalReq[Eureca.Protocol.signal] = pc.localDescription;
-    //        _this.send(webRTCSignalReq);
-    //    });
-    //}
     isAuthenticated() {
         return this.eureca.authenticated;
     }
-    send(data /*, webRTC=false*/) {
-        //if (webRTC && this.webRTCChannel)
-        //{
-        //    this.webRTCChannel.send(data);
-        //    return;
-        //}
+    send(data) {
         if (this.socket.send) {
             this.socket.send(data);
         }
@@ -86,7 +61,6 @@ class Socket extends EObject_class_1.EObject {
             this.socket.close();
         }
     }
-    //deprecated ?
     onopen(callback) {
         this.socket.on('open', callback);
     }
@@ -108,11 +82,9 @@ class Server {
     constructor(primus) {
         this.primus = primus;
     }
-    //on client connect
     onconnect(callback) {
         this.primus.on('connection', function (psocket) {
             var socket = new Socket(psocket);
-            //Eureca.Util.extend(iosocket, socket);
             callback(socket);
         });
     }
@@ -120,19 +92,9 @@ class Server {
 exports.Server = Server;
 var createServer = function (hook, options = {}) {
     try {
-        //var primusOptions: any = {};
         options.pathname = options.prefix ? '/' + options.prefix : undefined;
         var primus = new Primus(hook, options);
-        // // sync middleware
-        // primus.use('eureca', function (req, res) {
-        //     console.log('EURECA middleware in action');
-        //     req.tag='eureca.io';
-        //     console.log('>> req.tag=',req.tag);
-        //     console.log('>> req=',req.headers.cookie);
-        // });                
-        //primus.save(__dirname + '/js/primus.js');
         var primusTransport = Transport_1.Transport.get('primus');
-        //populate the client script
         primusTransport.script = primus.library();
         var server = new Server(primus);
         return server;
@@ -152,8 +114,6 @@ var createClient = function (uri, options = {}) {
     options.path = options.prefix ? '/' + options.prefix : undefined;
     var socket;
     if (Util_class_1.Util.isNodejs) {
-        //eioptions.transports = ['websocket', 'polling', 'flashsocket'];
-        //console.log('connecting to ', uri, options);
         var CSocket = Primus.createSocket(options);
         socket = new CSocket(uri);
     }
@@ -162,12 +122,7 @@ var createClient = function (uri, options = {}) {
         socket = new Primus(uri, options);
     }
     var client = new Socket(socket);
-    //(<any>client).send = socket.send;
-    //socket.onopen = client.onopen;
-    //Eureca.Util.extend(socket, client);
     return client;
 };
-//Transport.register('primus', '/js/primus.js', createClient, createServer);
-//set empty client script by default, it'll be populated by createClient function
 Transport_1.Transport.register('primus', '', createClient, createServer, (v) => v, (v) => v);
 //# sourceMappingURL=Primus.transport.js.map

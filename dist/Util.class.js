@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-// Class
 class Util {
-    //Borrowed from RMI.js https://github.com/mmarcon/rmi.js
     static randomStr(length = 10) {
         let text = '';
         const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

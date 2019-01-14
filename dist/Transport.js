@@ -1,6 +1,4 @@
 "use strict";
-/// <reference path="ISocket.interface.ts" />
-/// <reference path="IServer.interface.ts" />
 Object.defineProperty(exports, "__esModule", { value: true });
 class Transport {
     static register(name, clientScript, createClient, createServer, defaultSerializer, defaultDeserializer) {
@@ -16,12 +14,9 @@ class Transport {
     }
     static get(name) {
         if (name != 'webrtc') {
-            //console.log('* using primus:' + name);
-            //settings.transport =  'primus';
             return this.transports['primus'];
         }
         else {
-            //console.log('* using ' + name);
             return this.transports[name];
         }
     }

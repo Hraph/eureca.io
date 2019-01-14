@@ -1,9 +1,5 @@
 "use strict";
-/// <reference path="../EObject.class.ts" />
-/// <reference path="../Util.class.ts" />
-/// 
 Object.defineProperty(exports, "__esModule", { value: true });
-//highly inspired from https://github.com/cjb/serverless-webrtc/
 const Util_class_1 = require("../Util.class");
 const EObject_class_1 = require("../EObject.class");
 var webrtc;
@@ -12,8 +8,6 @@ if (Util_class_1.Util.isNodejs) {
         webrtc = require('wrtc');
     }
     catch (e) {
-        //console.error("wrtc module not found : WebRTC support will not be available");
-        //process.exit(e.code);
         webrtc = { unavailable: true, error: e };
     }
 }
@@ -25,7 +19,6 @@ class WebRTCPeer extends EObject_class_1.EObject {
         this.id = Util_class_1.Util.randomStr(16);
         this.pc = null;
         this.offer = null;
-        //private answer = null;
         this.channel = null;
         this.pendingDataChannels = {};
         this.dataChannels = {};
@@ -58,26 +51,16 @@ class WebRTCPeer extends EObject_class_1.EObject {
         var __this = this;
         var pc = new PeerConnection(this.cfg, this.con);
         this.pc = pc;
-        //this.makeDataChannel();
         pc.onsignalingstatechange = this.onsignalingstatechange.bind(this);
         pc.oniceconnectionstatechange = this.oniceconnectionstatechange.bind({ pc: pc, handler: this });
         pc.onicegatheringstatechange = this.onicegatheringstatechange.bind(this);
         pc.onicecandidate = function (candidate) {
-            // Firing this callback with a null candidate indicates that
-            // trickle ICE gathering has finished, and all the candidates
-            // are now present in pc.localDescription.  Waiting until now
-            // to create the answer saves us from having to send offer +
-            // answer + iceCandidates separately.
             if (candidate.candidate == null) {
                 if (typeof callback == 'function')
                     callback(pc);
             }
         };
-        // If you don't make a datachannel *before* making your offer (such
-        // that it's included in the offer), then when you try to make one
-        // afterwards it just stays in "connecting" state forever.  This is
-        // my least favorite thing about the datachannel API.
-        var channel = pc.createDataChannel('eureca.io', { /**/ reliable: __this.channelSettings.reliable, maxRetransmits: __this.channelSettings.maxRetransmits, ordered: __this.channelSettings.ordered });
+        var channel = pc.createDataChannel('eureca.io', { reliable: __this.channelSettings.reliable, maxRetransmits: __this.channelSettings.maxRetransmits, ordered: __this.channelSettings.ordered });
         this.channel = channel;
         pc.createOffer()
             .then(desc => pc.setLocalDescription(desc), failureCallback)
@@ -92,26 +75,18 @@ class WebRTCPeer extends EObject_class_1.EObject {
         var __this = this;
         var data = typeof pastedOffer === 'object' ? pastedOffer : JSON.parse(pastedOffer);
         var pc = new PeerConnection(this.cfg, this.con);
-        //this.pc = pc;
         pc.onsignalingstatechange = this.onsignalingstatechange.bind(this);
         pc.oniceconnectionstatechange = this.oniceconnectionstatechange.bind({ pc: pc, handler: this });
         pc.onicegatheringstatechange = this.onicegatheringstatechange.bind(this);
         pc.onicecandidate = function (candidate) {
-            // Firing this callback with a null candidate indicates that
-            // trickle ICE gathering has finished, and all the candidates
-            // are now present in pc.localDescription.  Waiting until now
-            // to create the answer saves us from having to send offer +
-            // answer + iceCandidates separately.
             if (candidate.candidate == null) {
                 if (typeof callback == 'function')
                     callback(pc);
             }
         };
-        //var labels = Object.keys(this.dataChannelSettings);
         pc.ondatachannel = function (evt) {
             var channel = evt.channel;
             channel.request = request;
-            //__this.channel = channel;
             var label = channel.label;
             __this.pendingDataChannels[label] = channel;
             channel.binaryType = 'arraybuffer';
@@ -140,22 +115,6 @@ class WebRTCPeer extends EObject_class_1.EObject {
             __this.trigger('disconnected');
         }
         if (pc.iceConnectionState == 'completed' || pc.iceConnectionState == 'connected') {
-            // var ackObj = {};
-            // ackObj[Protocol.signalACK] = 1;
-            // var maxtries = 10;
-            // var itv = setInterval(function () {
-            //     maxtries--;
-            //     if (maxtries <= 0) {
-            //         clearInterval(itv);
-            //         __this.doHandleError('Channel readyState failure ');
-            //         return;
-            //     }
-            //     if (__this.channel.readyState == 'open') {
-            //         clearInterval(itv);
-            //         __this.channel.send(JSON.stringify(ackObj));
-            //     }
-            // }, 500);
-            //
         }
         else {
             __this.stateTimeout = setTimeout(function () {
@@ -164,7 +123,6 @@ class WebRTCPeer extends EObject_class_1.EObject {
         }
     }
     onicegatheringstatechange(state) {
-        //console.info('ice gathering state change:', state);
     }
     doHandleError(error) {
         this.trigger('error', error);
