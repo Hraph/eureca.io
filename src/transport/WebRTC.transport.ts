@@ -5,18 +5,21 @@
 /// <reference path="../ISocket.interface.ts" />
 /// <reference path="WebRTCPeer.ts" />
 
-/** @ignore */
-declare var __dirname;
-/** @ignore */
-declare var process;
+import {Util} from "../Util.class";
+import {ISocket} from "../ISocket.interface";
+import {EObject} from "../EObject.class";
+import {IServer} from "../IServer.interface";
+import {Protocol} from "../Protocol.config";
+import {Transport} from "../Transport";
+import {WebRTCPeer} from "./WebRTCPeer";
+
 /** @ignore */
 declare var require;
 /** @ignore */
 declare var webrtc: any;
-/** @ignore */
-module Eureca.Transports.WebRTCTransport {
+
     var qs, http;
-    if (Eureca.Util.isNodejs) {
+    if (Util.isNodejs) {
         qs = require('querystring');
         http = require('http');
         try {
@@ -26,20 +29,16 @@ module Eureca.Transports.WebRTCTransport {
             //process.exit(e.code);
             webrtc = {};
         }
-
     }
-
 
     export class Socket extends EObject implements ISocket {
         public request;
         public id;
         public remoteAddress;
         public eureca: any = {};
-        
-
 
         private wRTCPeer;
-        constructor(public socket?: any, public peer?: WebRTC.Peer) {
+        constructor(public socket?: any, public peer?: WebRTCPeer) {
             super();
             //this.request = socket.request;
             this.id = peer && peer.id ? peer.id : Util.randomStr(16);
@@ -61,9 +60,6 @@ module Eureca.Transports.WebRTCTransport {
                 this.socket.onclose = null;
                 this.socket.onerror = null;
             }
-
-
-
 
             this.socket = socket;
 
@@ -149,7 +145,6 @@ module Eureca.Transports.WebRTCTransport {
 
     export class Server implements IServer {
 
-
         private processPost(request, response, callback) {
             var queryData = "";
             if (typeof callback !== 'function') return null;
@@ -178,7 +173,6 @@ module Eureca.Transports.WebRTCTransport {
         constructor(public appServer: any, options:any) {
             var __this = this;
 
-
             var app = appServer;
             if (appServer._events.request !== undefined && appServer.routes === undefined) app = appServer._events.request;
 
@@ -191,7 +185,6 @@ module Eureca.Transports.WebRTCTransport {
                         __this.serverPeer.getOffer(offer, request, function (pc) {
                             var resp = {};
                             resp[Protocol.signal] = pc.localDescription;
-
 
                             response.write(JSON.stringify(resp));
                             response.end();
@@ -247,7 +240,6 @@ module Eureca.Transports.WebRTCTransport {
             
         }
 
-        
         onconnect(callback: (Socket) => void) {
 
             this.serverPeer.on('datachannel', function (datachannel) {
@@ -256,8 +248,6 @@ module Eureca.Transports.WebRTCTransport {
                 callback(socket);
             });
         }
-
-
     }
 
     /**
@@ -274,9 +264,7 @@ module Eureca.Transports.WebRTCTransport {
         }
         catch (ex) {
         }
-    }
-
-
+    };
 
     var createClient = function (uri, options: any = {}) {
         
@@ -297,9 +285,6 @@ module Eureca.Transports.WebRTCTransport {
 
         var retries = options.retries;
 
-        
-
-
         var signal = function () {
             
 
@@ -312,10 +297,7 @@ module Eureca.Transports.WebRTCTransport {
 
             clientPeer.makeOffer(function (pc) 
             {
-                if (Eureca.Util.isNodejs) {
-
-
-                    
+                if (Util.isNodejs) {
 
                     var url = require("url");
 
@@ -354,7 +336,7 @@ module Eureca.Transports.WebRTCTransport {
                     post_req.on('error', function (error) {
                         setTimeout(function () { signal(); }, 3000);
                     });
-                    //
+
                 } else {
 
                     var xhr = new XMLHttpRequest();
@@ -388,8 +370,6 @@ module Eureca.Transports.WebRTCTransport {
 
                             clientPeer.getAnswer(resp[Protocol.signal]);
                             retries = options.retries;
-
-
                         }
                         else {
                             if (xhr.readyState == 4 && xhr.status != 200) {
@@ -410,7 +390,7 @@ module Eureca.Transports.WebRTCTransport {
                 client.trigger('error', error);
             }
         );
-        }
+        };
 
 
         signal();
@@ -423,7 +403,7 @@ module Eureca.Transports.WebRTCTransport {
         });
 
         return client;
-    }
+    };
 
     
     const deserialize = (message) => {

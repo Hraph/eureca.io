@@ -1,6 +1,4 @@
-import Server = Eureca.Server;
-import Client = Eureca.Client;
-import Transport = Eureca.Transport;
-import Protocol = Eureca.Protocol;
-
-export {Server, Client, Transport, Protocol}
+export * from './Server.class';
+export * from './Client.class';
+export * from './Protocol.config';
+export * from './Transport';
