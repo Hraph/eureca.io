@@ -35,7 +35,9 @@
   "engines": {
     "node": ">=4.0.0"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
   "devDependencies": {
     "@types/node": "^10.12.18",
     "express": "^4.16.2",
