@@ -13,4 +13,4 @@ class EurecaPromise extends Promise {
     }
 }
 exports.EurecaPromise = EurecaPromise;
-//# sourceMappingURL=eurecapromise.js.map
+//# sourceMappingURL=EurecaPromise.js.map

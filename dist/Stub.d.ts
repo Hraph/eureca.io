@@ -1,6 +1,6 @@
 /// <reference path="Protocol.config.d.ts" />
 /// <reference path="Util.class.d.ts" />
-/// <reference path="eurecapromise.d.ts" />
+/// <reference path="EurecaPromise.d.ts" />
 import { EurecaPromise } from "./EurecaPromise";
 export declare class Stub {
     settings: any;

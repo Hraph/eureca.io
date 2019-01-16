@@ -1,7 +1,7 @@
 /// <reference path="Protocol.config.ts" />
 
 /// <reference path="Util.class.ts" />
-/// <reference path="eurecapromise.ts" />
+/// <reference path="EurecaPromise.ts" />
 
 import {Protocol} from "./Protocol.config";
 import {Util} from "./Util.class";
